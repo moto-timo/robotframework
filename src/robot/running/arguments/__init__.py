@@ -16,7 +16,7 @@ import sys
 
 from .argumentmapper import ArgumentMapper
 from .argumentparser import (PythonArgumentParser, UserKeywordArgumentParser,
-                             DynamicArgumentParser, JavaArgumentParser)
+                             DynamicArgumentParser, JavaArgumentParser, DotnetArgumentParser)
 from .argumentresolver import ArgumentResolver
 from .argumentspec import ArgumentSpec
 from .argumentvalidator import ArgumentValidator
@@ -25,3 +25,7 @@ if sys.platform.startswith('java'):
     from .javaargumentcoercer import JavaArgumentCoercer
 else:
     JavaArgumentCoercer = lambda *args: None
+if sys.platform == 'cli':
+    from .dotnetargumentcoercer import DotnetArgumentCoercer
+else:
+    DotnetArgumentCoercer = lambda *args: None

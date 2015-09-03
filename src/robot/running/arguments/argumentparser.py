@@ -189,3 +189,55 @@ class UserKeywordArgumentParser(_ArgumentSpecParser):
         if not is_scalar_var(arg):
             self._raise_invalid_spec("Invalid argument syntax '%s'." % arg)
         return arg[2:-1]
+
+class DotnetArgumentParser(_ArgumentParser):
+
+    def _get_arg_spec(self, signatures):
+        if not signatures:
+            return self._no_signatures_arg_spec()
+        elif len(signatures) == 1:
+            return self._single_signature_arg_spec(signatures[0])
+        else:
+            return self._multi_signature_arg_spec(signatures)
+
+    def _no_signatures_arg_spec(self):
+        # Happens when a class has no public constructors
+        return self._format_arg_spec()
+
+    def _single_signature_arg_spec(self, signature):
+        varargs, kwargs = self._get_varargs_and_kwargs_support(signature.args)
+        positional = len(signature.args) - int(varargs) - int(kwargs)
+        return self._format_arg_spec(positional, varargs=varargs, kwargs=kwargs)
+
+    def _get_varargs_and_kwargs_support(self, args):
+        if not args:
+            return False, False
+        if self._is_varargs_type(args[-1]):
+            return True, False
+        if not self._is_kwargs_type(args[-1]):
+            return False, False
+        if len(args) > 1 and self._is_varargs_type(args[-2]):
+            return True, True
+        return False, True
+
+    def _is_varargs_type(self, arg):
+        return arg is List or isinstance(arg, Class) and arg.isArray()
+
+    def _is_kwargs_type(self, arg):
+        return arg is Map
+
+    def _multi_signature_arg_spec(self, signatures):
+        mina = maxa = len(signatures[0].args)
+        for sig in signatures[1:]:
+            argc = len(sig.args)
+            mina = min(argc, mina)
+            maxa = max(argc, maxa)
+        return self._format_arg_spec(maxa, maxa-mina)
+
+    def _format_arg_spec(self, positional=0, defaults=0, varargs=False, kwargs=False):
+        positional = ['arg%d' % (i+1) for i in range(positional)]
+        defaults = [''] * defaults
+        varargs = '*varargs' if varargs else None
+        kwargs = '**kwargs' if kwargs else None
+        supports_named = False
+        return positional, defaults, varargs, kwargs, supports_named

@@ -16,6 +16,12 @@ import os
 import sys
 import inspect
 
+
+import platform
+if sys.platform == 'cli' and platform.python_implementation() == 'IronPython':
+    import clr
+    from robot.utils import clrtype
+
 from robot.errors import DataError
 
 from .encoding import decode_from_system
@@ -37,6 +43,7 @@ class Importer(object):
         self._logger = logger
         self._importers = (ByPathImporter(logger),
                            NonDottedImporter(logger),
+                           DotNetImporter(logger),
                            DottedImporter(logger))
         self._by_path_importer = self._importers[0]
 
@@ -142,10 +149,38 @@ class _Importer(object):
             try:
                 return __import__(name, fromlist=fromlist)
             except ImportError:
+                # Hack to support .Net dll's, see:
+                # http://code.google.com/p/robotframework/issues/detail?id=721
+                # https://github.com/robotframework/robotframework/issues/721
+                if platform.python_implementation() == 'IronPython':
+                    import clr
+                    moddir, modname = os.path.split(abspath(name))
+                    clr.AddReferenceToFileAndPath(name)
+                    from robot.utils import clrtype
+                    clr.AddReference("IronPython")
+                    from IronPython.Runtime import ClassMethodDescriptor
+                    from IronPython.Runtime.Types import BuiltinFunction, BuiltinMethodDescriptor
+                    __import__(modname, fromlist=[str(modname)])
+                    try:
+                        clr_type = clr.GetClrType(modname)
+                        if clr_type.Name == clr_type.Namespace:
+                            clr_class = clrtype.ClrClass(clr_type)
+                            all_methods = clr_type.GetMethods()
+                            method_list = [m for m in all_methods if m.Name == name]
+                            for method in method_list:
+                                return_type = method.ReturnType
+                                params = method.GetParameters()
+                                param_names = [p.Name for p in params]
+                                if not method.IsStatic:
+                                    param_names = ['self'] + param_names
+                            return clrtype.ClrClass(clr_type)
+                    except:
+                        pass
+                    return self._import(modname, fromlist, retry=False)
                 # Hack to support standalone Jython. For more information, see:
-                # https://github.com/robotframework/robotframework/issues/515
+                # http://github.com/p/robotframework/robotframework/issues/515
                 # http://bugs.jython.org/issue1778514
-                if JYTHON and fromlist and retry:
+                elif JYTHON and retry:
                     __import__('%s.%s' % (name, fromlist[0]))
                     return self._import(name, fromlist, retry=False)
                 # Cannot use plain raise due to
@@ -161,9 +196,30 @@ class _Importer(object):
                         % type_name(imported))
 
     def _get_class_from_module(self, module, name=None):
+        if sys.platform == 'cli':
+            import clr
+            from robot.utils import clrtype
+            try:
+                clr_type = clr.GetClrType(module)
+                if clr_type.Name == clr_type.Namespace:
+                    klass = clrtype.ClrClass(clr_type)
+            except TypeError:
+                print "TypeError"
+                pass
+            except:
+                pass
         klass = getattr(module, name or module.__name__, None)
         return klass if inspect.isclass(klass) else None
 
+    def _get_class_from_dll(self, lib, name=None):
+        if inspect.isclass(lib):
+                klass = lib
+        else:
+                klass = getattr(lib, name or lib.__name__, None)
+        return klass if inspect.isclass(klass) else None
+
+
+		
     def _get_source(self, imported):
         try:
             return abspath(inspect.getfile(imported))
@@ -172,7 +228,7 @@ class _Importer(object):
 
 
 class ByPathImporter(_Importer):
-    _valid_import_extensions = ('.py', '.java', '.class', '')
+    _valid_import_extensions = ('.py', '.java', '.class', '.dll', '')
 
     def handles(self, path):
         return os.path.isabs(path)
@@ -243,6 +299,26 @@ class NonDottedImporter(_Importer):
         module = self._import(name)
         imported = self._get_class_from_module(module) or module
         return self._verify_type(imported), self._get_source(imported)
+
+
+class DotNetImporter(_Importer):
+
+    def handles(self, name):
+        return '.dll' in name
+
+    def import_(self, name):
+        lib_name, lib_ext = name.rsplit('.', 1)
+        assert lib_ext == 'dll'
+        namespace = self._import(lib_name, fromlist=[str(lib_name)])
+        try:
+            imported = getattr(namespace, lib_name)
+        except AttributeError:
+            raise DataError("DLL '%s' does not contain '%s'."
+                            % (lib_name, lib_name))
+        except TypeError:
+            raise DataError("TypeError in DotNetImporter.import_")
+        imported = self._get_class_from_dll(imported, lib_name) or imported
+        return self._verify_type(imported), self._get_source(namespace)
 
 
 class DottedImporter(_Importer):

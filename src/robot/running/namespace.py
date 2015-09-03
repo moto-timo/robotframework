@@ -33,7 +33,7 @@ IMPORTER = Importer()
 
 class Namespace(object):
     _default_libraries = ('BuiltIn', 'Reserved', 'Easter')
-    _library_import_by_path_endings = ('.py', '.java', '.class', '/', os.sep)
+    _library_import_by_path_endings = ('.py', '.java', '.class', '.dll', '/', os.sep)
 
     def __init__(self, variables, suite, user_keywords, imports):
         LOGGER.info("Initializing namespace for test suite '%s'" % suite.longname)

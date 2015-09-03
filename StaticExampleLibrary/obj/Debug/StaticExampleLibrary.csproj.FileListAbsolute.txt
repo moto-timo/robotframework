@@ -1,0 +1,9 @@
+C:\Projects\Testermatic - Copy\StaticExampleLibrary\bin\Debug\StaticExampleLibrary.dll
+C:\Projects\Testermatic - Copy\StaticExampleLibrary\bin\Debug\StaticExampleLibrary.pdb
+C:\Projects\Testermatic - Copy\StaticExampleLibrary\obj\Debug\StaticExampleLibrary.dll
+C:\Projects\Testermatic - Copy\StaticExampleLibrary\obj\Debug\StaticExampleLibrary.pdb
+C:\Projects\robotframework\StaticExampleLibrary\bin\Debug\StaticExampleLibrary.dll
+C:\Projects\robotframework\StaticExampleLibrary\bin\Debug\StaticExampleLibrary.pdb
+C:\Projects\robotframework\StaticExampleLibrary\obj\Debug\StaticExampleLibrary.dll
+C:\Projects\robotframework\StaticExampleLibrary\obj\Debug\StaticExampleLibrary.pdb
+C:\Projects\robotframework\StaticExampleLibrary\obj\Debug\StaticExampleLibrary.csprojResolveAssemblyReference.cache

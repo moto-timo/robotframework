@@ -20,8 +20,8 @@ from robot.model import Keywords, Tags
 from robot.variables import contains_var, is_list_var
 
 from .arguments import (ArgumentResolver, ArgumentSpec, ArgumentMapper,
-                        DynamicArgumentParser, JavaArgumentCoercer,
-                        JavaArgumentParser, PythonArgumentParser)
+                        DynamicArgumentParser, DotnetArgumentCoercer, JavaArgumentCoercer,
+                        DotnetArgumentParser, JavaArgumentParser, PythonArgumentParser)
 from .model import Keyword
 from .keywordrunner import KeywordRunner
 from .outputcapture import OutputCapturer
@@ -34,6 +34,8 @@ def Handler(library, name, method):
         return _RunKeywordHandler(library, name, method)
     if utils.is_java_method(method):
         return _JavaHandler(library, name, method)
+    if utils.is_dotnet_method(method):
+        return _DotnetHandler(library, name, method)
     else:
         return _PythonHandler(library, name, method)
 
@@ -45,7 +47,7 @@ def DynamicHandler(library, name, method, doc, argspec):
 
 
 def InitHandler(library, method, docgetter=None):
-    Init = _PythonInitHandler if not utils.is_java_init(method) else _JavaInitHandler
+    Init = _PythonInitHandler if not utils.is_dotnet_init(method) and not utils.is_java_init(method) else _JavaInitHandler if not utils.is_dotnet_init(method) else _DotnetInitHandler
     return Init(library, '__init__', method, docgetter)
 
 
@@ -445,3 +447,47 @@ class EmbeddedArgs(object):
         # Needed due to https://github.com/IronLanguages/main/issues/1192
         return EmbeddedArgs(self.name, self.orig_name, self._embedded_args,
                             copy.copy(self._orig_handler))
+
+
+class _DotnetHandler(_RunnableHandler):
+
+    def __init__(self, library, handler_name, handler_method):
+        _RunnableHandler.__init__(self, library, handler_name, handler_method)
+        signatures = self._get_signatures(handler_method)
+        self._arg_coercer = DotnetArgumentCoercer(signatures, self.arguments)
+
+    def _get_argument_resolver(self, argspec):
+        return ArgumentResolver(argspec, dict_to_kwargs=True)
+
+    def _parse_arguments(self, handler_method):
+        signatures = self._get_signatures(handler_method)
+        return DotnetArgumentParser().parse(signatures, self.longname)
+
+    def _get_signatures(self, handler):
+        code_object = getattr(handler, 'im_func', handler)
+        return code_object.argslist[:code_object.nargs]
+
+    def resolve_arguments(self, args, variables=None):
+        positional, named = self._argument_resolver.resolve(args, variables)
+        arguments = self._arg_coercer.coerce(positional, named,
+                                             dryrun=not variables)
+        return arguments, {}
+
+
+class _DotnetInitHandler(_DotnetHandler):
+
+    def __init__(self, library, handler_name, handler_method, docgetter):
+        _DotnetHandler.__init__(self, library, handler_name, handler_method)
+        self._docgetter = docgetter
+
+    @property
+    def doc(self):
+        if self._docgetter:
+            self._doc = self._docgetter() or self._doc
+            self._docgetter = None
+        return self._doc
+
+    def _parse_arguments(self, handler_method):
+        parser = DotnetArgumentParser(type='Test Library')
+        signatures = self._get_signatures(handler_method)
+        return parser.parse(signatures, self.library.name)
