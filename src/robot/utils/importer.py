@@ -16,22 +16,20 @@ import os
 import sys
 import inspect
 
-
-import platform
-if sys.platform == 'cli' and platform.python_implementation() == 'IronPython':
-    import clr
-    from robot.utils import clrtype
-
 from robot.errors import DataError
 
 from .encoding import decode_from_system
 from .error import get_error_details
-from .platform import JYTHON
+from .platform import JYTHON, IRONPYTHON
 from .robotpath import abspath, normpath
 from .robottypes import type_name, is_unicode
 
 if JYTHON:
     from java.lang.System import getProperty
+
+if IRONPYTHON:
+    import clr
+    from robot.utils import clrtype
 
 
 class Importer(object):
@@ -196,7 +194,7 @@ class _Importer(object):
                         % type_name(imported))
 
     def _get_class_from_module(self, module, name=None):
-        if sys.platform == 'cli':
+        if IRONPYTHON:
             import clr
             from robot.utils import clrtype
             try:

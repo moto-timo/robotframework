@@ -44,7 +44,13 @@ else:
     try:
         from elementtree import ElementTree as ET
     except ImportError:
-        raise ImportError(_ERROR)
+        try:
+            # fixed in later versions of Ironpython
+            # TODO: figure out minimum version
+            # and check, e.g. sys.version_info < (2, 7, 5):
+            from xml.etree import ElementTree as ET
+        except ImportError:
+            raise ImportError(_ERROR)
 
 
 # cElementTree.VERSION seems to always be 1.0.6. We want real API version.

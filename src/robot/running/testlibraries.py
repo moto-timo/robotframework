@@ -22,7 +22,7 @@ from robot.output import LOGGER
 from robot.utils import (getdoc, get_error_details, Importer, is_java_init,
                          is_dotnet_init, is_dotnet_method,
                          is_java_method, JYTHON, normalize, seq2str2, unic,
-                         is_list_like)
+                         is_list_like, IRONPYTHON)
 
 from .arguments import EmbeddedArguments
 from .dynamicmethods import (GetKeywordArguments, GetKeywordDocumentation,
@@ -36,7 +36,7 @@ if JYTHON:
 else:
     Object = None
 
-if sys.platform == 'cli':
+if IRONPYTHON:
     import clr
     clr.AddReference('System.Core')
     from System import Action, Func
