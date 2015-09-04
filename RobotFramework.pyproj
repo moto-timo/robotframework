@@ -14,7 +14,7 @@
     <InterpreterId>{fcc291aa-427c-498c-a4d7-4502d6449b8c}</InterpreterId>
     <InterpreterVersion>2.7</InterpreterVersion>
     <CommandLineArguments>run .\dotnet\dotnet2.robot</CommandLineArguments>
-    <DebugStdLib>False</DebugStdLib>
+    <DebugStdLib>True</DebugStdLib>
     <InterpreterArguments>-X:Frames</InterpreterArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
