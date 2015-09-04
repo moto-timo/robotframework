@@ -12,8 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .platform import JYTHON
-import platform
+from .platform import JYTHON, IRONPYTHON
 
 if JYTHON:
 
@@ -32,7 +31,7 @@ if JYTHON:
     def is_dotnet_method(method):
         return False
 
-elif platform.python_implementation() == 'IronPython':
+elif IRONPYTHON:
     import clr
     clr.AddReference("Microsoft.Dynamic")
     clr.AddReference("Microsoft.Scripting")

@@ -35,6 +35,7 @@ class Importer(object):
 
     def import_library(self, name, args, alias, variables):
         lib = TestLibrary(name, args, variables, create_handlers=False)
+        LOGGER.warn("lib = TestLibrary(...) : '%s'" % lib)
         positional, named = lib.positional_args, lib.named_args
         lib = self._import_library(name, positional, named, lib)
         if alias:
@@ -72,6 +73,9 @@ class Importer(object):
                        type, lib.scope.lower(), len(lib), listener))
         if not lib and not lib.has_listener:
             LOGGER.warn("Imported library '%s' contains no keywords" % name)
+            LOGGER.warn("lib = '%s'" % lib)
+            LOGGER.warn("lib.__class__.__name__: '%s' " % lib.__class__.__name__)
+            LOGGER.warn("lib.has_listener = '%s'" % lib.has_listener)
 
     def _copy_library(self, orig, name):
         # This is pretty ugly. Hopefully we can remove cache and copying

@@ -161,6 +161,8 @@ class _Importer(object):
                     __import__(modname, fromlist=[str(modname)])
                     try:
                         clr_type = clr.GetClrType(modname)
+                        # FIXME: remove debugging code
+                        self._logger.warn("clr_type = '%s'" % clr_type)
                         if clr_type.Name == clr_type.Namespace:
                             clr_class = clrtype.ClrClass(clr_type)
                             all_methods = clr_type.GetMethods()
@@ -199,14 +201,25 @@ class _Importer(object):
             from robot.utils import clrtype
             try:
                 clr_type = clr.GetClrType(module)
+                self._logger.warn("clr_type = '%s'" % clr_type)
                 if clr_type.Name == clr_type.Namespace:
                     klass = clrtype.ClrClass(clr_type)
+                    # FIXME: delete this debbugging code
+                    self._logger.warn("clrtype.ClrClass(clr_type) = '%s'" % klass)
             except TypeError:
-                print "TypeError"
+                # DEBUG self._logger.error("TypeError;\n  clr_type = '%s'\n  klass = '%s'" % {clr.GetClrType(module), klass})
                 pass
             except:
                 pass
-        klass = getattr(module, name or module.__name__, None)
+            finally:
+                klass = getattr(module, name or module.__name__, None)
+                # FIXME: delete this debugging code
+                self._logger.warn("klass = '%s'" % klass)
+                self._logger.warn("name = '%s'" % name)
+                self._logger.warn("module.__name__ = '%s'" % module.__name__)
+                self._logger.warn("module.__class__.__name__ = '%s'" % module.__class__.__name__)
+        if not IRONPYTHON:
+                klass = getattr(module, name or module.__name__, None)
         return klass if inspect.isclass(klass) else None
 
     def _get_class_from_dll(self, lib, name=None):
@@ -216,8 +229,6 @@ class _Importer(object):
                 klass = getattr(lib, name or lib.__name__, None)
         return klass if inspect.isclass(klass) else None
 
-
-		
     def _get_source(self, imported):
         try:
             return abspath(inspect.getfile(imported))
