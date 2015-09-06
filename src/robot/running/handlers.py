@@ -453,15 +453,17 @@ class _DotnetHandler(_RunnableHandler):
 
     def __init__(self, library, handler_name, handler_method):
         _RunnableHandler.__init__(self, library, handler_name, handler_method)
-        signatures = self._get_signatures(handler_method)
-        self._arg_coercer = DotnetArgumentCoercer(signatures, self.arguments)
+#        signatures = self._get_signatures(handler_method)
+#        self._arg_coercer = DotnetArgumentCoercer(signatures, self.arguments)
 
     def _get_argument_resolver(self, argspec):
         return ArgumentResolver(argspec, dict_to_kwargs=True)
 
     def _parse_arguments(self, handler_method):
-        signatures = self._get_signatures(handler_method)
-        return DotnetArgumentParser().parse(signatures, self.longname)
+ #       signatures = self._get_signatures(handler_method)
+ #       return DotnetArgumentParser().parse(signatures, self.longname)
+         return PythonArgumentParser().parse(handler_method, self.longname)
+         # return DotnetArgumentParser().parse(handler_method, self.longname)
 
     def _get_signatures(self, handler):
         code_object = getattr(handler, 'im_func', handler)

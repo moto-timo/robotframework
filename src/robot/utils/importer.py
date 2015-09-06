@@ -150,7 +150,7 @@ class _Importer(object):
                 # Hack to support .Net dll's, see:
                 # http://code.google.com/p/robotframework/issues/detail?id=721
                 # https://github.com/robotframework/robotframework/issues/721
-                if platform.python_implementation() == 'IronPython':
+                if IRONPYTHON:
                     import clr
                     moddir, modname = os.path.split(abspath(name))
                     clr.AddReferenceToFileAndPath(name)
@@ -217,7 +217,7 @@ class _Importer(object):
                 self._logger.warn("klass = '%s'" % klass)
                 self._logger.warn("name = '%s'" % name)
                 self._logger.warn("module.__name__ = '%s'" % module.__name__)
-                self._logger.warn("module.__class__.__name__ = '%s'" % module.__class__.__name__)
+                #self._logger.warn("module.__class__.__name__ = '%s'" % module.__class__.__name__)
         if not IRONPYTHON:
                 klass = getattr(module, name or module.__name__, None)
         return klass if inspect.isclass(klass) else None

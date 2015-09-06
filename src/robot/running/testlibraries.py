@@ -13,7 +13,6 @@
 #  limitations under the License.
 
 import inspect
-import platform
 import os
 
 from robot.errors import DataError
